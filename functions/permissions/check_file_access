@@ -1,0 +1,34 @@
+#!/bin/bash
+
+check_file_access() {
+    local path="${1:-}"
+    local access="${2:-read}"
+
+    if [[ -z "$path" ]]; then
+        return 2
+    fi
+
+    case "$access" in
+        read)
+            [[ -r "$path" ]]
+            ;;
+        write)
+            [[ -w "$path" ]]
+            ;;
+        execute)
+            [[ -x "$path" ]]
+            ;;
+        exists)
+            [[ -e "$path" ]]
+            ;;
+        directory)
+            [[ -d "$path" ]]
+            ;;
+        file)
+            [[ -f "$path" ]]
+            ;;
+        *)
+            return 2
+            ;;
+    esac
+}
