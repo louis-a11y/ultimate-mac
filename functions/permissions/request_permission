@@ -1,0 +1,14 @@
+#!/bin/bash
+
+request_permission() {
+    if check_admin; then
+        return 0
+    fi
+
+    if [[ ! -t 0 || ! -t 2 ]]; then
+        echo "Error: administrator authorization requires a terminal." >&2
+        return 1
+    fi
+
+    sudo -v
+}
