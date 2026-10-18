@@ -1,0 +1,26 @@
+
+progress_bar() {
+    local current="$1"
+    local total="$2"
+    local message="${3:-Loading...}"
+    local width=20
+    local filled empty percent
+
+    if (( total <= 0 || current < 0 || current > total )); then
+        echo "Error: invalid progress values." >&2
+        return 1
+    fi
+
+    percent=$((current * 100 / total))
+    filled=$((current * width / total))
+    empty=$((width - filled))
+
+    printf -v filled '%*s' "$filled" ''
+    printf -v empty '%*s' "$empty" ''
+
+    filled="${filled// /█}"
+    empty="${empty// /░}"
+
+    printf '\r\033[K%s\n[%s%s] %d%% (%d/%d)' \
+        "$message" "$filled" "$empty" "$percent" "$current" "$total"
+}
