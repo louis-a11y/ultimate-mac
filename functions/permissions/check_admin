@@ -1,0 +1,9 @@
+#!/bin/bash
+
+check_admin() {
+    if [[ "$EUID" -eq 0 ]]; then
+        return 0
+    fi
+
+    return 1
+}
