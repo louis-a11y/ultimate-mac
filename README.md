@@ -4,7 +4,7 @@ Utility utili (credo) per trasformare il tuo computer Mac nel Mac definitivo! Ol
 QUESTO È ANCORA UN WORK IN PROGRESS
 ## License
 
-Copyright 2026 SuperLouisYT
+
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
