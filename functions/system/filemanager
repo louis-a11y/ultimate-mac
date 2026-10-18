@@ -1,0 +1,156 @@
+
+filemanager() {
+    local action="${1:-}"
+    local file="${2:-}"
+
+    case "$action" in
+        --help|-h|help)
+            cat <<'EOF'
+Ultimate Mac File Manager
+
+Usage:
+  filemanager create <file>
+  filemanager read <file>
+  filemanager edit <file> <key> <value>
+  filemanager delete <file>
+
+Actions:
+  create  Create an empty file without overwriting an existing file.
+  read    Display a file's contents.
+  edit    Set a KEY=VALUE entry in a configuration file.
+  delete  Delete a file after confirmation.
+EOF
+            return 0
+            ;;
+
+        create)
+            [[ -n "$file" ]] || {
+                echo "Usage: filemanager create <file>" >&2
+                return 2
+            }
+
+            if [[ -e "$file" ]]; then
+                echo "Error: file already exists: $file" >&2
+                return 1
+            fi
+
+            if ! (umask 077; set -C; : > "$file"); then
+                echo "Error: could not create file: $file" >&2
+                return 1
+            fi
+
+            echo "Created: $file"
+            ;;
+
+        read)
+            [[ -n "$file" ]] || {
+                echo "Usage: filemanager read <file>" >&2
+                return 2
+            }
+
+            [[ -f "$file" && -r "$file" ]] || {
+                echo "Error: file doesn't exist or isn't readable: $file" >&2
+                return 1
+            }
+
+            cat "$file"
+            ;;
+
+        edit)
+            local key="${3:-}"
+            local value="${4-}"
+            local tmp
+
+            [[ -n "$file" && -n "$key" && $# -ge 4 ]] || {
+                echo "Usage: filemanager edit <file> <key> <value>" >&2
+                return 2
+            }
+
+            [[ -f "$file" && -r "$file" && -w "$file" ]] || {
+                echo "Error: file must exist and be readable/writable." >&2
+                return 1
+            }
+
+            [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ &&
+               "$value" != *$'\n'* &&
+               "$value" != *$'\r'* ]] || {
+                echo "Error: invalid key or multi-line value." >&2
+                return 2
+            }
+
+            tmp="$(mktemp "${file}.tmp.XXXXXX")" || return 1
+
+            if ! awk -v key="$key" -v value="$value" '
+                BEGIN { updated = 0 }
+                index($0, key "=") == 1 {
+                    if (!updated) {
+                        print key "=" value
+                        updated = 1
+                    }
+                    next
+                }
+                { print }
+                END {
+                    if (!updated)
+                        print key "=" value
+                }
+            ' "$file" > "$tmp"; then
+                rm -f "$tmp"
+                echo "Error: could not edit file." >&2
+                return 1
+            fi
+
+            if ! chmod "$(stat -f '%Lp' "$file")" "$tmp"; then
+                rm -f "$tmp"
+                echo "Error: could not preserve permissions." >&2
+                return 1
+            fi
+
+            if ! mv "$tmp" "$file"; then
+                rm -f "$tmp"
+                echo "Error: could not replace file." >&2
+                return 1
+            fi
+
+            echo "Updated $key in $file"
+            ;;
+
+delete)
+    local answer="${3:-}"
+
+    [[ -n "$file" ]] || {
+        echo "Usage: filemanager delete <file> [yes|no]" >&2
+        return 2
+    }
+
+    [[ -f "$file" && ! -L "$file" ]] || {
+        echo "Error: regular file not found: $file" >&2
+        return 1
+    }
+
+    if [[ -z "$answer" ]]; then
+        printf 'Delete "%s"? [y/N] ' "$file"
+        read -r answer < /dev/tty || return 1
+    fi
+
+    case "$answer" in
+        y|Y|yes|YES)
+            rm "$file" && echo "Deleted: $file"
+            ;;
+        n|N|no|NO|"")
+            echo "Deletion cancelled."
+            ;;
+        *)
+            echo "Error: answer must be yes or no." >&2
+            return 2
+            ;;
+    esac
+    ;;
+
+        *)
+            echo "Unknown action: $action" >&2
+            echo "Run filemanager --help for usage." >&2
+            return 2
+            ;;
+    esac
+}
