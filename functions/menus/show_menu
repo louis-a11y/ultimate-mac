@@ -1,0 +1,47 @@
+show_menu() {
+    local TITLE="$1"
+    shift
+    local OPTIONS=("$@")
+
+    local SELECTED=0
+    local KEY
+
+while true; do
+    clear > /dev/tty
+
+    echo "$TITLE" > /dev/tty
+    echo > /dev/tty
+
+for i in "${!OPTIONS[@]}"; do
+    if [ "$i" -eq "$SELECTED" ]; then
+        echo "> ${OPTIONS[$i]}" > /dev/tty
+    else
+        echo "  ${OPTIONS[$i]}" > /dev/tty
+    fi
+done
+
+        read -rsn1 KEY
+
+        case "$KEY" in
+            $'\x1b')
+                read -rsn2 KEY
+                case "$KEY" in
+                    "[A") ((SELECTED--)) ;;
+                    "[B") ((SELECTED++)) ;;
+                esac
+                ;;
+            "")
+                echo "$SELECTED"
+                return
+                ;;
+        esac
+
+        if [ "$SELECTED" -lt 0 ]; then
+            SELECTED=$((${#OPTIONS[@]}-1))
+        fi
+
+        if [ "$SELECTED" -ge "${#OPTIONS[@]}" ]; then
+            SELECTED=0
+        fi
+    done
+}
