@@ -1,0 +1,22 @@
+log() {
+    local LEVEL="$1"
+    local CATEGORY="$2"
+    local MESSAGE="$3"
+
+    if [ -z "$LEVEL" ]; then
+        LEVEL="$LOG_INFO"
+    fi
+
+    if [ -z "$CATEGORY" ]; then
+        CATEGORY="$LOG_GENERAL"
+    fi
+
+    if [ -z "$MESSAGE" ]; then
+        MESSAGE="$LOG_NOMSG"
+    fi
+
+    local TIMESTAMP
+    TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    echo "[$TIMESTAMP] [$LEVEL] [$CATEGORY] $MESSAGE" >> "$LOG_FILE"
+}
