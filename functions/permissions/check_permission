@@ -1,0 +1,19 @@
+#!/bin/bash
+
+check_permission() {
+    local type="${1:-}"
+    shift || return 2
+
+    case "$type" in
+        admin)
+            check_admin
+            ;;
+        read|write|execute|exists|directory|file)
+            check_file_access "${1:-}" "$type"
+            ;;
+        *)
+            echo "Error: unknown permission type: $type" >&2
+            return 2
+            ;;
+    esac
+}
